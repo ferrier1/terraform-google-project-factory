@@ -21,6 +21,18 @@ resource "random_id" "random_project_id_suffix" {
   byte_length = 2
 }
 
+
+data "external" "random_word" {
+  //program = ["/home/vagrant/google-network/modules/project-factory/random_word.sh"]
+  program = ["bash", "${path.module}/random_word.sh"]
+  query = {
+    word1 = "word1"
+    word2 = "word2"
+  }
+}
+
+
+
 /******************************************
   Locals configuration
  *****************************************/
@@ -29,9 +41,10 @@ locals {
   project_number         = "${google_project.project.number}"
   project_org_id         = "${var.folder_id != "" ? "" : var.org_id}"
   project_folder_id      = "${var.folder_id != "" ? var.folder_id : ""}"
-  temp_project_id        = "${var.random_project_id ? format("%s-%s",var.name,random_id.random_project_id_suffix.hex) : var.name}"
+  temp_project_id        = "${var.random_project_id ? format("%s-%s-%s",data.external.random_word.result.word1,data.external.random_word.result.word2,random_id.random_project_id_suffix.hex) : var.name}"
   domain                 = "${var.domain != "" ? var.domain : var.org_id != "" ? join("", data.google_organization.org.*.domain) : ""}"
   args_missing           = "${var.group_name != "" && var.org_id == "" && var.domain == "" ? 1 : 0}"
+  labels_missing         = "${length(keys(var.labels)) == 0 ? 1 : 0}"
   s_account_fmt          = "${format("serviceAccount:%s", google_service_account.default_service_account.email)}"
   api_s_account          = "${format("%s@cloudservices.gserviceaccount.com", local.project_number)}"
   api_s_account_fmt      = "${format("serviceAccount:%s", local.api_s_account)}"
@@ -55,6 +68,11 @@ locals {
 resource "null_resource" "args_missing" {
   count                                                                                           = "${local.args_missing}"
   "ERROR: Variable `group_name` was passed. Please provide either `org_id` or `domain` variables" = true
+}
+
+resource "null_resource" "labels_missing" {
+  count                   = "${local.labels_missing}"
+  "Please provide labels" = true
 }
 
 /******************************************
@@ -107,7 +125,6 @@ resource "google_project_service" "project_services" {
 
   project = "${local.project_id}"
   service = "${element(var.activate_apis, count.index)}"
-
   depends_on = ["google_project.project"]
 }
 
@@ -326,5 +343,16 @@ resource "google_project_iam_member" "gke_host_agent" {
   role    = "roles/container.hostServiceAgentUser"
   member  = "${local.gke_s_account_fmt}"
 
+  depends_on = ["google_project_service.project_services"]
+}
+
+/******************************************
+  Add oslogin metadata key to all projects
+ *****************************************/
+resource "google_compute_project_metadata_item" "oslogin" {
+  key     = "enable-oslogin"
+  value   = "true"
+  project = "${local.project_id}"
+  
   depends_on = ["google_project_service.project_services"]
 }
