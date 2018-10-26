@@ -33,6 +33,9 @@ data "external" "random_word" {
 
 
 
+
+
+
 /******************************************
   Locals configuration
  *****************************************/
@@ -353,6 +356,6 @@ resource "google_compute_project_metadata_item" "oslogin" {
   key     = "enable-oslogin"
   value   = "true"
   project = "${local.project_id}"
-  
+
   depends_on = ["google_project_service.project_services"]
 }
