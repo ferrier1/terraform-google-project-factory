@@ -22,15 +22,6 @@ resource "random_id" "random_project_id_suffix" {
 }
 
 
-data "external" "random_word" {
-  //program = ["/home/vagrant/google-network/modules/project-factory/random_word.sh"]
-  program = ["bash", "${path.module}/random_word.sh"]
-  query = {
-    word1 = "word1"
-    word2 = "word2"
-  }
-}
-
 resource "random_pet" "name" {
 
 }
