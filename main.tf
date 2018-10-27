@@ -28,6 +28,9 @@ resource "random_integer" "suffix" {
 
 }
 
+resource "random_pet" "name" {
+
+}
 
 
 
