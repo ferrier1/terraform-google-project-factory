@@ -22,15 +22,9 @@ resource "random_id" "random_project_id_suffix" {
 }
 
 
-data "external" "random_word" {
-  //program = ["/home/vagrant/google-network/modules/project-factory/random_word.sh"]
-  program = ["bash", "${path.module}/random_word.sh"]
-  query = {
-    word1 = "word1"
-    word2 = "word2"
-  }
-}
+resource "random_pet" "name" {
 
+}
 
 
 /******************************************
@@ -41,7 +35,7 @@ locals {
   project_number         = "${google_project.project.number}"
   project_org_id         = "${var.folder_id != "" ? "" : var.org_id}"
   project_folder_id      = "${var.folder_id != "" ? var.folder_id : ""}"
-  temp_project_id        = "${var.random_project_id ? format("%s-%s-%s",data.external.random_word.result.word1,data.external.random_word.result.word2,random_id.random_project_id_suffix.hex) : var.name}"
+  temp_project_id        = "${var.random_project_id ? format("%s-%s", random_pet.name.id, random_id.random_project_id_suffix.hex) : var.name}"
   domain                 = "${var.domain != "" ? var.domain : var.org_id != "" ? join("", data.google_organization.org.*.domain) : ""}"
   args_missing           = "${var.group_name != "" && var.org_id == "" && var.domain == "" ? 1 : 0}"
   labels_missing         = "${length(keys(var.labels)) == 0 ? 1 : 0}"
@@ -353,6 +347,6 @@ resource "google_compute_project_metadata_item" "oslogin" {
   key     = "enable-oslogin"
   value   = "true"
   project = "${local.project_id}"
-  
+
   depends_on = ["google_project_service.project_services"]
 }
