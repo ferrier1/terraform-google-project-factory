@@ -17,16 +17,15 @@
 /******************************************
   Project random id suffix configuration
  *****************************************/
-resource "random_id" "random_project_id_suffix" {
-  byte_length = 2
-}
-
 
 resource "random_pet" "name" {
 
 }
 
-
+resource "random_integer" "suffix" {
+  min     = 10000
+  max     = 99999
+}
 
 
 
@@ -38,7 +37,7 @@ locals {
   project_number         = "${google_project.project.number}"
   project_org_id         = "${var.folder_id != "" ? "" : var.org_id}"
   project_folder_id      = "${var.folder_id != "" ? var.folder_id : ""}"
-  temp_project_id        = "${var.random_project_id ? format("%s-%s", random_pet.name.id, random_id.random_project_id_suffix.hex) : var.name}"
+  temp_project_id        = "${var.random_project_id ? format("%s-%s", random_pet.name.id, random_integer.suffix.id) : var.name}"
   domain                 = "${var.domain != "" ? var.domain : var.org_id != "" ? join("", data.google_organization.org.*.domain) : ""}"
   args_missing           = "${var.group_name != "" && var.org_id == "" && var.domain == "" ? 1 : 0}"
   labels_missing         = "${length(keys(var.labels)) == 0 ? 1 : 0}"
