@@ -23,8 +23,8 @@ resource "random_pet" "name" {
 }
 
 resource "random_integer" "suffix" {
-  min     = 10000
-  max     = 99999
+  min     = 100000
+  max     = 999999
 }
 
 
@@ -37,7 +37,7 @@ locals {
   project_number         = "${google_project.project.number}"
   project_org_id         = "${var.folder_id != "" ? "" : var.org_id}"
   project_folder_id      = "${var.folder_id != "" ? var.folder_id : ""}"
-  temp_project_id        = "${var.random_project_id ? format("%s-%s", random_pet.name.id, random_integer.suffix.id) : var.name}"
+  temp_project_id        = "${var.random_project_id ? format("%s-%s", random_pet.name.id, random_integer.suffix.id) : format("%s-%s", var.name, random_integer.suffix.id)}"
   domain                 = "${var.domain != "" ? var.domain : var.org_id != "" ? join("", data.google_organization.org.*.domain) : ""}"
   args_missing           = "${var.group_name != "" && var.org_id == "" && var.domain == "" ? 1 : 0}"
   labels_missing         = "${length(keys(var.labels)) == 0 ? 1 : 0}"
