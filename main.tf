@@ -37,7 +37,9 @@ locals {
   project_number         = "${google_project.project.number}"
   project_org_id         = "${var.folder_id != "" ? "" : var.org_id}"
   project_folder_id      = "${var.folder_id != "" ? var.folder_id : ""}"
-  temp_project_id        = "${var.random_project_id ? format("%s-%s", random_pet.name.id, random_integer.suffix.id) : format("%s-%s", var.name, random_integer.suffix.id)}"
+  temp_project_name      = "${var.name != "" ? var.name : random_pet.name.id}"
+  temp_project_id        = "${var.random_project_id == "false" && var.name != "" ? format("%s-%s", var.name, random_integer.suffix.id) : format("%s-%s", random_pet.name.id, random_integer.suffix.id)}"
+  name_or_id_missing     = "${var.name == "" && var.random_project_id == "false" ? 1 : 0}"
   domain                 = "${var.domain != "" ? var.domain : var.org_id != "" ? join("", data.google_organization.org.*.domain) : ""}"
   args_missing           = "${var.group_name != "" && var.org_id == "" && var.domain == "" ? 1 : 0}"
   labels_missing         = "${length(keys(var.labels)) == 0 ? 1 : 0}"
@@ -59,6 +61,11 @@ locals {
     enabled  = "${list(var.app_engine)}"
     disabled = "${list()}"
   }
+}
+
+resource "null_resource" "name_or_id" {
+  count        = "${local.name_or_id_missing}"
+  "Please provide a project name or ID" = true
 }
 
 resource "null_resource" "args_missing" {
@@ -101,7 +108,7 @@ data "google_organization" "org" {
   Project creation
  *******************************************/
 resource "google_project" "project" {
-  name                = "${var.name}"
+  name                = "${local.temp_project_name}"
   project_id          = "${local.temp_project_id}"
   org_id              = "${local.project_org_id}"
   folder_id           = "${local.project_folder_id}"
@@ -164,7 +171,7 @@ resource "null_resource" "delete_default_compute_service_account" {
  *****************************************/
 resource "google_service_account" "default_service_account" {
   account_id   = "project-service-account"
-  display_name = "${var.name} Project Service Account"
+  display_name = "${local.temp_project_name} Project Service Account"
   project      = "${local.project_id}"
 }
 
